@@ -1,6 +1,5 @@
 package sn.work.lostandfound.security.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,15 +14,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import sn.work.lostandfound.security.filter.JwtAuthFilter;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-public class SecurityConfig {
-    @Autowired
-    private JwtAuthFilter authFilter;
+public class SecurityConfig implements WebMvcConfigurer {
+    private final JwtAuthFilter authFilter;
+    public SecurityConfig(JwtAuthFilter authFilter){
+        this.authFilter = authFilter;
+    }
 
     @Bean
     //authentication
@@ -50,7 +53,6 @@ public class SecurityConfig {
                         "/find/person/create",
                         "/find/category/create",
                         "/find/objet/create",
-                        "/find/objet/166620014422/person",
                         "/find/objet/all"
                         ).permitAll()
                 .and()
@@ -79,6 +81,15 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .maxAge(3600);
     }
 
 }

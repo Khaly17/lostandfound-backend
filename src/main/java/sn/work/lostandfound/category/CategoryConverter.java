@@ -7,22 +7,24 @@ import sn.work.lostandfound.objet.ObjetDto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class CategoryConverter {
     public ObjetConverter objetConverter;
     public CategoryDto convertToDto(Category category) {
         CategoryDto categoryDto = new CategoryDto();
+        objetConverter = new ObjetConverter();
         categoryDto.setId(category.getId());
         categoryDto.setLibelle(category.getLibelle());
         categoryDto.setCode(category.getCode());
         if(category.getCategoryImage() != null)
             categoryDto.setCategoryImage(category.getCategoryImage());
         if(category.getObjetList() != null) {
-            List<ObjetDto> objetDtoList = new ArrayList<>();
-            for (Objet objet: category.getObjetList()) {
-                objetDtoList.add(objetConverter.convertToDto(objet));
-            }
+            List<ObjetDto> objetDtoList =  category.getObjetList()
+                                                        .stream()
+                                                        .map(objetConverter::convertToDto)
+                                                        .collect(Collectors.toList());
             categoryDto.setObjetDtoList(objetDtoList);
         }
         return categoryDto;

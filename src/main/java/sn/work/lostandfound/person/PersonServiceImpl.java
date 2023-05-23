@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import org.springframework.web.server.ResponseStatusException;
 import sn.work.lostandfound.UserInfo.UserInfo;
 import sn.work.lostandfound.UserInfo.UserInfoService;
 import sn.work.lostandfound.myException.NotFoundException;
@@ -16,7 +19,8 @@ public class PersonServiceImpl implements PersonService {
     private final PersonRepository personRepository;
     private final PersonConverter personConverter;
     private final UserInfoService userInfoService;
-    
+
+
     public PersonServiceImpl(
             PersonRepository personRepository,
             PersonConverter personConverter,
@@ -28,36 +32,58 @@ public class PersonServiceImpl implements PersonService {
     }
 
     @Override
-    public PersonDto addPerson(PersonDto personDto) {
+    public ResponseEntity<?> addPerson(PersonDto personDto) {
+        if (personRepository.existsByEmail(personDto.getEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Cet email est déjà utilisé.");
+        }
+        if (personRepository.existsByPhoneNumber(personDto.getPhoneNumber())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Cet numéro est déjà utilisé.");
+        }
 
         Person person = personConverter.convertToEntity(personDto);
         Person personSaved = personRepository.save(person);
 
         UserInfo userInfo = new UserInfo();
         userInfo.setEmail(personDto.getEmail());
-        userInfo.setName(personDto.getUsername());
+        userInfo.setName(personDto.getEmail());
         userInfo.setPassword(personDto.getPassword());
         userInfo.setRoles("NO_VERIFY");
         userInfo.setPerson(personSaved);
 
         userInfoService.addUser(userInfo);
 
-        return personConverter.convertToDto(personSaved);
+        PersonDto savedPersonDto = personConverter.convertToDto(personSaved);
+        return ResponseEntity.ok(savedPersonDto);
     }
 
     @Override
-    public PersonDto updatePerson(Long id, PersonDto personDto) {
+    public ResponseEntity<?> updatePerson(Long id, PersonDto personDto) {
         Person person = personRepository.findById(id)
-        .orElseThrow(() -> new NotFoundException("Person not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Person not found with id: " + id));
 
         person.setFirstName(personDto.getFirstName());
         person.setLastName(personDto.getLastName());
-        person.setEmail(personDto.getEmail());
+        person.setPhoneNumber(person.getPhoneNumber());
 
-        Person updatePerson = personRepository.save(person);
-        
-        return this.personConverter.convertToDto(updatePerson);
+        Person updatedPerson = personRepository.save(person);
+
+        PersonDto updatedPersonDto = personConverter.convertToDto(updatedPerson);
+        return ResponseEntity.ok(updatedPersonDto);
     }
+//    public PersonDto updatePerson(Long id, PersonDto personDto) {
+//        Person person = personRepository.findById(id)
+//        .orElseThrow(() -> new NotFoundException("Person not found with id: " + id));
+//
+//        person.setFirstName(personDto.getFirstName());
+//        person.setLastName(personDto.getLastName());
+//        person.setEmail(personDto.getEmail());
+//
+//        Person updatePerson = personRepository.save(person);
+//
+//        return this.personConverter.convertToDto(updatePerson);
+//    }
 
     @Override
     public void deletePerson(Long id) {
@@ -82,15 +108,14 @@ public class PersonServiceImpl implements PersonService {
     }
 
     @Override
-    public PersonDto findPersonById(Long id) {
-        // TODO Auto-generated method stub
-        return null;
+    public Optional<Person> findPersonById(Long id) {
+
+        return this.personRepository.findById(id);
     }
 
     @Override
-    public Optional<PersonDto> findPersonByEmail(String email) {
-        // TODO Auto-generated method stub
-        return Optional.empty();
+    public Optional<Person> findPersonByEmail(String email) {
+        return this.personRepository.findByEmail(email);
     }
 
 }

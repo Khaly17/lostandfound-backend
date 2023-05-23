@@ -1,14 +1,17 @@
 package sn.work.lostandfound.person;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.http.ResponseEntity;
+
 import java.util.List;
 import java.util.Optional;
 
 public interface PersonService {
-    PersonDto addPerson(PersonDto personDto);
-    PersonDto updatePerson(Long id, PersonDto personDto);
+    ResponseEntity<?> addPerson(PersonDto personDto);
+    ResponseEntity<?> updatePerson(Long id, PersonDto personDto);
     void deletePerson(Long id);
     List<PersonDto> findAllPersons();
-    PersonDto findPersonById(Long id);
-    Optional<PersonDto> findPersonByEmail(String email);
+    Optional<Person> findPersonById(Long id);
+    Optional<Person> findPersonByEmail(String email);
 }
 

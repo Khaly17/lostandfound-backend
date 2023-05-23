@@ -1,5 +1,9 @@
 package sn.work.lostandfound.UserInfo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -8,21 +12,37 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
+import sn.work.lostandfound.person.Person;
+import sn.work.lostandfound.person.PersonConverter;
+import sn.work.lostandfound.person.PersonDto;
+import sn.work.lostandfound.person.PersonService;
 import sn.work.lostandfound.security.service.JwtService;
+import sn.work.lostandfound.utils.UserResponse;
+
+import java.util.Optional;
 
 @Service
 public class UserInfoService {
 
-    @Autowired
-    private UserInfoRepository repository;
+    private final UserInfoRepository repository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+
+    private final AuthenticationManager authenticationManager;
+
+    public UserInfoService(
+            UserInfoRepository repository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            AuthenticationManager authenticationManager
+    ){
+        this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+    }
 
     public String addUser(UserInfo userInfo) {
         userInfo.setPassword(passwordEncoder.encode(userInfo.getPassword()));
@@ -30,10 +50,23 @@ public class UserInfoService {
         return "user added to system ";
     }
 
-    public String authenticateAndGetToken(AuthRequest authRequest) {
+    public UserResponse authenticateAndGetToken(
+            AuthRequest authRequest,
+            PersonService personService,
+            PersonConverter personConverter
+            ) throws JsonProcessingException {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(authRequest.getUsername());
+
+//            ObjectMapper mapper = new ObjectMapper();
+            Optional<Person> person = personService.findPersonByEmail(authRequest.getUsername());
+            Optional<PersonDto> personDto = person.map(personConverter::convertToDto);
+
+            UserResponse userResponse = new UserResponse();
+            userResponse.setToken(jwtService.generateToken(authRequest));
+            userResponse.setPerson(personDto);
+
+            return userResponse;
         } else {
             throw new UsernameNotFoundException("invalid user request !");
         }

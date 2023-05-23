@@ -2,6 +2,7 @@ package sn.work.lostandfound.category;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import sn.work.lostandfound.constant.Constant;
 import sn.work.lostandfound.myException.NotFoundException;
 import sn.work.lostandfound.utils.Utils;
 
@@ -26,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService{
     @Override
     public CategoryDto addCategory(CategoryDto categoryDto, MultipartFile file) throws IOException {
         Category category = categoryConverter.convertToEntity(categoryDto);
-        String filename = Utils.fileUpload(file);
+        String filename = Utils.fileUpload(file, Constant.CATEGORY_STORAGE_PATH);
         if(filename != null)
             category.setCategoryImage(filename);
         Category categorySaved = categoryRepository.save(category);

@@ -24,7 +24,7 @@ public class Person {
     private String firstName;
     @Column(name = "email", unique = true)
     private String email;
-    @Column(name = "phone_number", unique = true)
+    @Column(name = "phone_number")
     private String phoneNumber;
     private String address;
     @OneToMany(mappedBy = "person", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

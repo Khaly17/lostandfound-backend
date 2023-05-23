@@ -1,6 +1,7 @@
 package sn.work.lostandfound.objet;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,12 +14,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/find")
 public class ObjetController {
-    @Autowired
-    private ObjetServiceImpl objetService;
-    @Autowired
-    private PersonConverter personConverter;
+
+    private final ObjetServiceImpl objetService;
+
+    private final PersonConverter personConverter;
+    public ObjetController(
+            ObjetServiceImpl objetService,
+            PersonConverter personConverter
+    ){
+        this.objetService = objetService;
+        this.personConverter = personConverter;
+    }
     @PostMapping("/objet/create")
-    public ObjetDto addObjet(
+    public ResponseEntity<?> addObjet(
             @RequestBody ObjetDto objetDto
             //@RequestParam("file") MultipartFile file
     ){
@@ -28,14 +36,37 @@ public class ObjetController {
     public List<ObjetDto> findAllObjets() {
         return objetService.findAllObjets();
     }
+
     @GetMapping("/objet/{objetNumber}/person")
-    public ResponseEntity<PersonDto> getPersonByObjetNumber(@PathVariable("objetNumber") String objetNumber) {
-        Person person = objetService.getPersonByObjetNumber(objetNumber);
-        if (person != null) {
-            PersonDto personDto = personConverter.convertToDto(person);
-            return ResponseEntity.ok(personDto);
+    public ResponseEntity<?> getPersonByObjetNumber(@PathVariable("objetNumber") String objetNumber) {
+        try {
+            ResponseEntity<?> responseEntity = objetService.getPersonByObjetNumber(objetNumber);
+            return generateResponse(responseEntity);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/objet/person/{objetId}")
+    public ResponseEntity<?> getPersonByObjetId(@PathVariable("objetId") Long objetId) {
+        try {
+            ResponseEntity<?> responseEntity = objetService.getPersonByObjetId(objetId, false);
+            return generateResponse(responseEntity);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private ResponseEntity<?> generateResponse(ResponseEntity<?> responseEntity) {
+        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+            PersonDto personDto = personConverter.convertToDto((Person) responseEntity.getBody());
+            return ResponseEntity.ok(personDto);
+        } else if (responseEntity.getStatusCode() == HttpStatus.PRECONDITION_FAILED) {
+            String errorMessage = "Vous devez d'abord finaliser le paiement.";
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body(errorMessage);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/objet/update/{id}")

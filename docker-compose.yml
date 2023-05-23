@@ -1,91 +1,46 @@
-#version: '3'
-#services:
-#  db:
-#    image: postgres
-#    environment:
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: khd.dev17
-#      POSTGRES_DB: sentroov
-#    volumes:
-#      - db-data:/var/lib/postgresql/data
-#  pgadmin:
-#    image: dpage/pgadmin4
-#    environment:
-#      PGADMIN_DEFAULT_EMAIL: contactwork@gmail.com
-#      PGADMIN_DEFAULT_PASSWORD: Passer123
-#    ports:
-#      - "8080:80"
-#  app:
-#    build: .
-#    ports:
-#      - "8081:80"
-#    depends_on:
-#      - db
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sentroov
-#      SPRING_DATASOURCE_USERNAME: postgres
-#      SPRING_DATASOURCE_PASSWORD: khd.dev17
-#      SPRING_PROFILES_ACTIVE: docker
-#volumes:
-#  db-data:
-
-#  $n_iSC7qdwUGEyR
-#============================================
-version: '3.1'
+version: '3.9'
 services:
-
-  postgresql_db:
+  db:
     image: postgres
-    ports:
-      - "5452:5442"
-    networks:
-      - sentroov_network
+    restart: always
     environment:
-      - POSTGRES_PASSWORD=khd.dev17
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=sentroov
-    volumes:
-      - db-data:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: khd.dev17
+      POSTGRES_DB: sentroov
+    ports:
+      - 5432:5432
+
   pgadmin:
     image: dpage/pgadmin4
+    restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: contactwork@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: Passer123
+      PGADMIN_DEFAULT_EMAIL: khd.secure@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: khd.dev17
     ports:
-      - "8081:80"
-    networks:
-      - sentroov_network
-networks:
-  sentroov_network:
-    driver: bridge
+      - 8081:80
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    ports:
+      - 8080:8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sentroov
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: khd.dev17
+    volumes:
+      - category-images:/app/images/category-images
+      - object-images:/app/images/object-images
+
+  flask:
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+
 volumes:
-  db-data:
-#
-#
-#version: "3.1"
-#services:
-#  sentroov-container-db:
-#    environment:
-#      POSTGRES_USER: sentroov
-#      POSTGRES_PASSWORD: a1128f69-e6f7-4e93-a2df-3d4db6030abc
-#    ports:
-#      - "5432:5432"
-#    networks:
-#      - sentroov_network
-#    volumes:
-#      - db-data:/var/lib/postgresql/data
-#  sentroov-pgadmin4:
-#    image: dpage/pgadmin4
-#    environment:
-#      PGADMIN_DEFAULT_EMAIL: contactwork@gmail.com
-#      PGADMIN_DEFAULT_PASSWORD: a1128f69-e6f7-4e93-jf4r
-#    ports:
-#      - "8889:80"
-#    networks:
-#      - sentroov_network
-#networks:
-#  sentroov_network:
-#    driver: bridge
-#
-#volumes:
-#  db-data:
+  category-images:
+  object-images:

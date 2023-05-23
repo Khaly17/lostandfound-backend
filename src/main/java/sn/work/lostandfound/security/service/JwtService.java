@@ -1,5 +1,9 @@
 package sn.work.lostandfound.security.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -7,6 +11,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import sn.work.lostandfound.UserInfo.AuthRequest;
 
 import java.security.Key;
 import java.util.Date;
@@ -51,15 +56,25 @@ public class JwtService {
     }
 
 
-    public String generateToken(String userName){
-        Map<String,Object> claims=new HashMap<>();
-        return createToken(claims,userName);
+//    public String generateToken(AuthRequest authRequest){
+//        Map<String,Object> claims=new HashMap<>();
+//        return createToken(claims,authRequest);
+//    }
+
+    public String generateToken(AuthRequest authRequest) throws  JsonProcessingException {
+        Map<String, Object> claims = new HashMap<>();
+        String token = createToken(claims, authRequest);
+
+        // Créer un objet JSON avec le token
+        return token;
     }
 
-    private String createToken(Map<String, Object> claims, String userName) {
+
+    private String createToken(Map<String, Object> claims, AuthRequest authRequest) {
+        claims.put("password", authRequest.getPassword());
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(userName)
+                .setSubject(authRequest.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis()+1000*60*30))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();

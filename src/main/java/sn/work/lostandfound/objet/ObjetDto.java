@@ -23,6 +23,7 @@ public class ObjetDto {
     private CategoryDto category;
     private String photo;
     private String objetNumber;
+    private String token;
    
 }
 

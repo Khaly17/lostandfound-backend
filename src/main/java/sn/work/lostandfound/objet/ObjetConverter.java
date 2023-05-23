@@ -23,10 +23,9 @@ public class ObjetConverter {
         objetDto.setCreatedDate(objet.getCreatedDate());
         objetDto.setUpdatedDate(objet.getUpdatedDate());
         objetDto.setStatus(objet.getStatus());
-//        objetDto.setPerson(personConverter.convertToDto(objet.getPerson()));
-//        objetDto.setCategory(categoryConverter.convertToDto(objet.getCategory()));
         objetDto.setPhoto(objet.getPhoto());
         objetDto.setObjetNumber(objet.getObjetNumber());
+        objetDto.setToken(objet.getToken());
         return objetDto;
     }
 
@@ -38,10 +37,13 @@ public class ObjetConverter {
         objet.setCreatedDate(objetDto.getCreatedDate());
         objet.setUpdatedDate(objetDto.getUpdatedDate());
         objet.setStatus(objetDto.getStatus());
-        objet.setPerson(personConverter.convertToEntity(objetDto.getPerson()));
-        objet.setCategory(categoryConverter.convertToEntity(objetDto.getCategory()));
+        if(objetDto.getPerson() != null)
+            objet.setPerson(personConverter.convertToEntity(objetDto.getPerson()));
+        if(objetDto.getCategory() != null)
+            objet.setCategory(categoryConverter.convertToEntity(objetDto.getCategory()));
         objet.setPhoto(objetDto.getPhoto());
         objet.setObjetNumber(objetDto.getObjetNumber());
+        objet.setToken(objetDto.getToken());
         return objet;
     }
 }

@@ -1,9 +1,5 @@
 package sn.work.lostandfound.objet;
 
-import java.time.LocalDate;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.OnDelete;
@@ -46,5 +42,6 @@ public class Objet {
     private String photo;
     @Column(name = "objet_number", unique = true)
     private String objetNumber;
+    private String token;
 
 }

@@ -5,11 +5,50 @@ spring:
     username: postgres
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: true
-server:
-  port: 8089
+
+  # Configuration pour Gmail
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: khd.andyou@gmail.com
+    password: Nguickf@ll17
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+#server:
+#  port: 8080
+
+payment:
+  MASTER_KEY: 8XHqH8y3-lGwn-4WUi-diHV-FOSQmLzz5Cci
+  dev:
+    PRIVATE_KEY: test_private_1zHjjVUMnHsHHvkW2G1V8ejcBVV
+    TOKEN: 1GwZSda7IgX3QK72FqNG
+  prod:
+    PRIVATE_KEY: live_private_Y2Xcdyp5ISHTPjmKeyrXNyvsLqz
+    TOKEN: aItjzH3lLc1xdDuNdiur
+  api:
+    dev: https://app.paydunya.com/sandbox-api/v1/checkout-invoice/create
+    prod: https://app.paydunya.com/api/v1/checkout-invoice/create
+
+  confirm_payment:
+    CONFIRM_TOKEN: https://app.paydunya.com/sandbox-api/v1/checkout-invoice/confirm/
+
+  action:
+    CANCEL_URL: https://senwork.com/cancel
+    CALLBACK_URL: https://senwork.com/cancel
+    RETURN_URL: https://senwork.com/cancel
+
+image:
+  category-storage-path: /images/category-images
+  object-storage-path: /images/object-images
+

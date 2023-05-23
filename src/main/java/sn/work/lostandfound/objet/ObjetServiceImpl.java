@@ -1,17 +1,26 @@
 package sn.work.lostandfound.objet;
 
-import org.hibernate.ObjectNotFoundException;
+import org.hibernate.Hibernate;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import sn.work.lostandfound.SemanticSimilarity.SemanticSimilarity;
+import sn.work.lostandfound.SemanticSimilarity.SemanticSimilarityScore;
+import sn.work.lostandfound.constant.Constant;
+import sn.work.lostandfound.correspondence.Correspondence;
+import sn.work.lostandfound.correspondence.CorrespondenceRepository;
+import sn.work.lostandfound.correspondence.CorrespondenceServiceImpl;
 import sn.work.lostandfound.myException.NotFoundException;
-import sn.work.lostandfound.myException.ObjectAlreadyExistsException;
+import sn.work.lostandfound.notification.*;
+import sn.work.lostandfound.payment.*;
 import sn.work.lostandfound.person.Person;
 import sn.work.lostandfound.person.PersonConverter;
-import sn.work.lostandfound.utils.Utils;
+import sn.work.lostandfound.person.PersonDto;
+import sn.work.lostandfound.person.PersonRepository;
 
-import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +31,11 @@ import java.util.stream.Collectors;
 public class ObjetServiceImpl implements ObjetService{
     private final ObjetRepository objetRepository;
     private final ObjetConverter objetConverter;
+    private final CorrespondenceServiceImpl correspondenceService;
+    private final CorrespondenceRepository correspondenceRepository;
+    private final NotificationRepository notificationRepository;
+    private final PaymentServiceImpl paymentService;
+    private final PersonRepository personRepository;
     private final PersonConverter personConverter;
 
     LocalDate currentDate = LocalDate.now();
@@ -31,25 +45,147 @@ public class ObjetServiceImpl implements ObjetService{
     public ObjetServiceImpl(
             ObjetRepository objetRepository,
             ObjetConverter objetConverter,
-            PersonConverter personConverter) {
+            CorrespondenceServiceImpl correspondenceService,
+            CorrespondenceRepository correspondenceRepository,
+            NotificationRepository notificationRepository,
+            PaymentServiceImpl paymentService,
+            PersonRepository personRepository,
+            PersonConverter personConverter
+    ) {
         this.objetRepository = objetRepository;
         this.objetConverter = objetConverter;
+        this.correspondenceService = correspondenceService;
+        this.correspondenceRepository = correspondenceRepository;
+        this.notificationRepository = notificationRepository;
+        this.paymentService = paymentService;
+        this.personRepository = personRepository;
         this.personConverter = personConverter;
     }
 
-    @Override
-    public ObjetDto addObjet(ObjetDto objetDto) {
-        objetDto.setCreatedDate(formattedDate);
+@Override
+    public ResponseEntity<?> addObjet(ObjetDto objetDto) {
+
         Objet objet = objetConverter.convertToEntity(objetDto);
+//        LocalDateTime formattedDate = LocalDateTime.now();
+        objet.setCreatedDate(formattedDate);
+        objet.setUpdatedDate(formattedDate);
+
         try {
-//            String filename = Utils.fileUpload(file);
-//            if(filename != null)
-//                objet.setPhoto(filename);
             Objet objetSaved = objetRepository.save(objet);
-            return objetConverter.convertToDto(objetSaved);
+            processCorrespondence(objetSaved);
+            ObjetDto savedObjetDto = objetConverter.convertToDto(objetSaved);
+            return ResponseEntity.ok(savedObjetDto);
         } catch (DataIntegrityViolationException e) {
-            throw new ObjectAlreadyExistsException("Objet with number " + objetDto.getObjetNumber() + " already exists.");
+            String errorMessage = "L'objet avec le numéro " + objetDto.getObjetNumber() + " existe déjà.";
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessage);
         }
+    }
+
+
+    private void processCorrespondence(Objet objet) {
+        List<ObjetDto> objetDtoList = findAllObjets();
+        Correspondence correspondence = getBestCorrespondence(objet, objetDtoList);
+        if (correspondence != null) {
+            correspondenceRepository.save(correspondence);
+            pushNotification(correspondence.getUserIdFound(), correspondence.getObjetFoundId());
+            pushNotification(correspondence.getUserIdLost(), correspondence.getObjetLostId());
+        }
+    }
+    private Correspondence getBestCorrespondence(Objet objetSaved, List<ObjetDto> objetDtoList) {
+        double bestScore = 0.0;
+        Correspondence correspondence = null;
+
+        for (ObjetDto objetDto : objetDtoList) {
+            if (objetDto.getId().equals(objetSaved.getId())) {
+                continue;
+            }
+
+            SemanticSimilarity similarity = new SemanticSimilarity();
+
+            if (objetSaved.getStatus()) {
+                objetSaved.setToken("NO_TOKEN");
+                similarity.setObj_found(objetSaved);
+                similarity.setObj_lost(objetConverter.convertToEntity(objetDto));
+            } else {
+                Payment payment = new Payment();
+                Invoice invoice = new Invoice();
+                Store store = new Store();
+
+                invoice.setTotal_amount(Constant.PAYMENT_AMOUNT);
+                invoice.setDescription(Constant.INVOICE_DESCRIPTION);
+                store.setName(objetSaved.getObjetName());
+                payment.setInvoice(invoice);
+                payment.setStore(store);
+
+                PaymentResponse paymentResponse = paymentService.addPayment(payment);
+                objetSaved.setToken(paymentResponse.getToken());
+                updateObjet(objetSaved.getId(), objetConverter.convertToDto(objetSaved));
+                similarity.setObj_lost(objetSaved);
+                similarity.setObj_found(objetConverter.convertToEntity(objetDto));
+            }
+
+            SemanticSimilarityScore semanticSimilarityScore = correspondenceService.getScore(similarity);
+
+            if (bestScore < semanticSimilarityScore.getSimilarity_score()) {
+                bestScore = semanticSimilarityScore.getSimilarity_score();
+                correspondence = new Correspondence();
+                correspondence.setCorrespondenceDate(new Date());
+
+                if (objetSaved.getStatus()) {
+                    ResponseEntity<?> responseEntityFound = getPersonByObjetId(objetSaved.getId(), true);
+                    ResponseEntity<?> responseEntityLost = getPersonByObjetId(objetDto.getId(), true);
+
+                    if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
+                            responseEntityLost.getStatusCode() == HttpStatus.OK) {
+                        PersonDto personFound = (PersonDto) responseEntityFound.getBody();
+                        PersonDto personLost = (PersonDto) responseEntityLost.getBody();
+
+                        correspondence.setUserIdFound(personFound.getId());
+                        correspondence.setObjetFoundId(objetSaved.getId());
+                        correspondence.setUserIdLost(personLost.getId());
+                        correspondence.setObjetLostId(objetDto.getId());
+                    }
+                } else {
+                    ResponseEntity<?> responseEntityFound = getPersonByObjetId(objetDto.getId(), true);
+                    ResponseEntity<?> responseEntityLost = getPersonByObjetId(objetSaved.getId(), true);
+
+                    if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
+                            responseEntityLost.getStatusCode() == HttpStatus.OK) {
+                        PersonDto personFound = (PersonDto) responseEntityFound.getBody();
+                        PersonDto personLost = (PersonDto) responseEntityLost.getBody();
+
+                        correspondence.setUserIdFound(personFound.getId());
+                        correspondence.setObjetFoundId(objetDto.getId());
+                        correspondence.setUserIdLost(personLost.getId());
+                        correspondence.setObjetLostId(objetSaved.getId());
+                    }
+                }
+
+                correspondence.setCorrespondenceStatus(Constant.CORRESPONDENCE_STATUS_SUCCESS);
+                correspondence.setCorrespondenceScore(bestScore);
+                correspondence.setCorrespondenceDate(new Date());
+            }
+        }
+
+        return correspondence;
+    }
+
+    public void pushNotification(Long userId, Long objId){
+        ObjetDto obj = objetRepository.findById(objId).map(objetConverter::convertToDto).get();
+        Notification notification = new Notification();
+
+        notification.setUserId(userId);
+        notification.setObjId(objId);
+        notification.setCreatedAt(new Date());
+
+        if(obj.getStatus()){
+            notification.setMotif(Constant.OBJET_FOUND_MOTIF);
+            notification.setDescription(Constant.OBJET_FOUND_DESCRIPTION+obj.getDescription());
+        }else{
+            notification.setMotif(Constant.OBJET_LOST_MOTIF);
+            notification.setDescription(Constant.OBJET_LOST_DESCRIPTION+obj.getDescription());
+        }
+        notificationRepository.save(notification);
     }
 
     @Override
@@ -98,12 +234,52 @@ public class ObjetServiceImpl implements ObjetService{
         return Optional.empty();
     }
 
-    public Person getPersonByObjetNumber(String objetNumber) {
-        Optional<Objet> objectOptional = objetRepository.findByObjetNumber(objetNumber);
-        if (objectOptional.isPresent()) {
-            Objet objet = objectOptional.get();
-            return objet.getPerson();
+    public ResponseEntity<?> getPersonByObjetNumber(String objetNumber) {
+        Objet objet = objetRepository.findByObjetNumber(objetNumber)
+                .orElseThrow(() -> new IllegalArgumentException("L'objet avec le numéro spécifié n'a pas été trouvé."));
+
+        boolean paymentVerified = verifyPayment(objet.getToken());
+
+        if (paymentVerified) {
+            Person person = objet.getPerson();
+            return ResponseEntity.ok(person);
+        } else {
+            String errorMessage = "Vous devez d'abord finaliser le paiement.";
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body(errorMessage);
         }
-        return null;
     }
+    public ResponseEntity<?> getPersonByObjetId(Long objetId, Boolean add) {
+        Objet objet = objetRepository.findById(objetId)
+                .orElseThrow(() -> new IllegalArgumentException("L'objet avec l'ID spécifié n'a pas été trouvé."));
+        boolean paymentVerified = add || verifyPayment(objet.getToken());
+
+        if (paymentVerified) {
+            Person person = objet.getPerson();
+            Hibernate.initialize(person);
+            return ResponseEntity.ok(personConverter.convertToDto(person));
+        } else {
+            String errorMessage = "Vous devez d'abord finaliser le paiement.";
+            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body(errorMessage);
+        }
+    }
+
+    private boolean verifyPayment(String token) {
+        try {
+            ConfirmPayment confirmPayment = paymentService.verifyPayment(token);
+            if (confirmPayment.getStatus() == Constant.PAYMENT_STATUS_SUCCESS) {
+                return true;
+            } else {
+                throw new IllegalStateException("Vous devez d'abord finaliser le paiement.");
+            }
+        } catch (IllegalStateException e) {
+            String errorMessage = e.getMessage();
+            return false;
+        } catch (Exception e) {
+            String errorMessage = "Une erreur s'est produite lors de la vérification du paiement.";
+            System.out.println(errorMessage);
+            return false;
+        }
+    }
+
+
 }
