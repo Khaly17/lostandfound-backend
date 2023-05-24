@@ -40,7 +40,7 @@ public class Objet {
     private Category category;
 
     private String photo;
-    @Column(name = "objet_number", unique = true)
+    @Column(name = "objet_number")
     private String objetNumber;
     private String token;
 

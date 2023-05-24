@@ -64,21 +64,28 @@ public class ObjetServiceImpl implements ObjetService{
 
 @Override
     public ResponseEntity<?> addObjet(ObjetDto objetDto) {
+       if (objetDto.getObjetNumber() != null){
+           if (objetRepository.existsByObjetNumberAndStatus(objetDto.getObjetNumber(),objetDto.getStatus())){
+               return ResponseEntity.status(HttpStatus.CONFLICT)
+                       .body("Cet numéro est déjà utilisé.");
+           }
+       }
 
         Objet objet = objetConverter.convertToEntity(objetDto);
 //        LocalDateTime formattedDate = LocalDateTime.now();
         objet.setCreatedDate(formattedDate);
         objet.setUpdatedDate(formattedDate);
 
-        try {
-            Objet objetSaved = objetRepository.save(objet);
-            processCorrespondence(objetSaved);
-            ObjetDto savedObjetDto = objetConverter.convertToDto(objetSaved);
-            return ResponseEntity.ok(savedObjetDto);
-        } catch (DataIntegrityViolationException e) {
-            String errorMessage = "L'objet avec le numéro " + objetDto.getObjetNumber() + " existe déjà.";
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessage);
-        }
+        Objet objetSaved = objetRepository.save(objet);
+        processCorrespondence(objetSaved);
+        ObjetDto savedObjetDto = objetConverter.convertToDto(objetSaved);
+        return ResponseEntity.ok(savedObjetDto);
+
+//        try {
+//        } catch (DataIntegrityViolationException e) {
+//            String errorMessage = "L'objet avec le numéro " + objetDto.getObjetNumber() + " existe déjà.";
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessage);
+//        }
     }
 
 
@@ -91,9 +98,107 @@ public class ObjetServiceImpl implements ObjetService{
             pushNotification(correspondence.getUserIdLost(), correspondence.getObjetLostId());
         }
     }
+//    private Correspondence getBestCorrespondence(Objet objetSaved, List<ObjetDto> objetDtoList) {
+//        double bestScore = 0.0;
+//        Correspondence correspondence = null;
+//        if (objetDtoList.size() == 1 && objetSaved.getStatus() == false){
+//
+//            Payment payment = new Payment();
+//            Invoice invoice = new Invoice();
+//            Store store = new Store();
+//
+//            invoice.setTotal_amount(Constant.PAYMENT_AMOUNT);
+//            invoice.setDescription(Constant.INVOICE_DESCRIPTION);
+//            store.setName(objetSaved.getObjetName());
+//            payment.setInvoice(invoice);
+//            payment.setStore(store);
+//
+//            PaymentResponse paymentResponse = paymentService.addPayment(payment);
+//            objetSaved.setToken(paymentResponse.getToken());
+//            updateObjet(objetSaved.getId(), objetConverter.convertToDto(objetSaved));
+//        }
+//        for (ObjetDto objetDto : objetDtoList) {
+//            if (objetDto.getId().equals(objetSaved.getId())) {
+//                continue;
+//            }
+//
+//            SemanticSimilarity similarity = new SemanticSimilarity();
+//
+//            if (objetSaved.getStatus()) {
+//                objetSaved.setToken("NO_TOKEN");
+//                similarity.setObj_found(objetSaved);
+//                similarity.setObj_lost(objetConverter.convertToEntity(objetDto));
+//            } else {
+//                Payment payment = new Payment();
+//                Invoice invoice = new Invoice();
+//                Store store = new Store();
+//
+//                invoice.setTotal_amount(Constant.PAYMENT_AMOUNT);
+//                invoice.setDescription(Constant.INVOICE_DESCRIPTION);
+//                store.setName(objetSaved.getObjetName());
+//                payment.setInvoice(invoice);
+//                payment.setStore(store);
+//
+//                PaymentResponse paymentResponse = paymentService.addPayment(payment);
+//                objetSaved.setToken(paymentResponse.getToken());
+//                updateObjet(objetSaved.getId(), objetConverter.convertToDto(objetSaved));
+//                similarity.setObj_lost(objetSaved);
+//                similarity.setObj_found(objetConverter.convertToEntity(objetDto));
+//            }
+//
+//            SemanticSimilarityScore semanticSimilarityScore = correspondenceService.getScore(similarity);
+//
+//            if (bestScore < semanticSimilarityScore.getSimilarity_score()) {
+//                bestScore = semanticSimilarityScore.getSimilarity_score();
+//                correspondence = new Correspondence();
+//                correspondence.setCorrespondenceDate(new Date());
+//
+//                if (objetSaved.getStatus()) {
+//                    ResponseEntity<?> responseEntityFound = getPersonByObjetId(objetSaved.getId(), true);
+//                    ResponseEntity<?> responseEntityLost = getPersonByObjetId(objetDto.getId(), true);
+//
+//                    if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
+//                            responseEntityLost.getStatusCode() == HttpStatus.OK) {
+//                        PersonDto personFound = (PersonDto) responseEntityFound.getBody();
+//                        PersonDto personLost = (PersonDto) responseEntityLost.getBody();
+//
+//                        correspondence.setUserIdFound(personFound.getId());
+//                        correspondence.setObjetFoundId(objetSaved.getId());
+//                        correspondence.setUserIdLost(personLost.getId());
+//                        correspondence.setObjetLostId(objetDto.getId());
+//                    }
+//                } else {
+//                    ResponseEntity<?> responseEntityFound = getPersonByObjetId(objetDto.getId(), true);
+//                    ResponseEntity<?> responseEntityLost = getPersonByObjetId(objetSaved.getId(), true);
+//
+//                    if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
+//                            responseEntityLost.getStatusCode() == HttpStatus.OK) {
+//                        PersonDto personFound = (PersonDto) responseEntityFound.getBody();
+//                        PersonDto personLost = (PersonDto) responseEntityLost.getBody();
+//
+//                        correspondence.setUserIdFound(personFound.getId());
+//                        correspondence.setObjetFoundId(objetDto.getId());
+//                        correspondence.setUserIdLost(personLost.getId());
+//                        correspondence.setObjetLostId(objetSaved.getId());
+//                    }
+//                }
+//
+//                correspondence.setCorrespondenceStatus(Constant.CORRESPONDENCE_STATUS_SUCCESS);
+//                correspondence.setCorrespondenceScore(bestScore);
+//                correspondence.setCorrespondenceDate(new Date());
+//            }
+//        }
+//
+//        return correspondence;
+//    }
+
     private Correspondence getBestCorrespondence(Objet objetSaved, List<ObjetDto> objetDtoList) {
         double bestScore = 0.0;
         Correspondence correspondence = null;
+
+        if (objetDtoList.size() == 1 && !objetSaved.getStatus()) {
+            createPaymentAndToken(objetSaved);
+        }
 
         for (ObjetDto objetDto : objetDtoList) {
             if (objetDto.getId().equals(objetSaved.getId())) {
@@ -107,19 +212,7 @@ public class ObjetServiceImpl implements ObjetService{
                 similarity.setObj_found(objetSaved);
                 similarity.setObj_lost(objetConverter.convertToEntity(objetDto));
             } else {
-                Payment payment = new Payment();
-                Invoice invoice = new Invoice();
-                Store store = new Store();
-
-                invoice.setTotal_amount(Constant.PAYMENT_AMOUNT);
-                invoice.setDescription(Constant.INVOICE_DESCRIPTION);
-                store.setName(objetSaved.getObjetName());
-                payment.setInvoice(invoice);
-                payment.setStore(store);
-
-                PaymentResponse paymentResponse = paymentService.addPayment(payment);
-                objetSaved.setToken(paymentResponse.getToken());
-                updateObjet(objetSaved.getId(), objetConverter.convertToDto(objetSaved));
+                createPaymentAndToken(objetSaved);
                 similarity.setObj_lost(objetSaved);
                 similarity.setObj_found(objetConverter.convertToEntity(objetDto));
             }
@@ -131,34 +224,28 @@ public class ObjetServiceImpl implements ObjetService{
                 correspondence = new Correspondence();
                 correspondence.setCorrespondenceDate(new Date());
 
+                ResponseEntity<?> responseEntityFound;
+                ResponseEntity<?> responseEntityLost;
+
                 if (objetSaved.getStatus()) {
-                    ResponseEntity<?> responseEntityFound = getPersonByObjetId(objetSaved.getId(), true);
-                    ResponseEntity<?> responseEntityLost = getPersonByObjetId(objetDto.getId(), true);
-
-                    if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
-                            responseEntityLost.getStatusCode() == HttpStatus.OK) {
-                        PersonDto personFound = (PersonDto) responseEntityFound.getBody();
-                        PersonDto personLost = (PersonDto) responseEntityLost.getBody();
-
-                        correspondence.setUserIdFound(personFound.getId());
-                        correspondence.setObjetFoundId(objetSaved.getId());
-                        correspondence.setUserIdLost(personLost.getId());
-                        correspondence.setObjetLostId(objetDto.getId());
-                    }
+                    responseEntityFound = getPersonByObjetId(objetSaved.getId(), true);
+                    responseEntityLost = getPersonByObjetId(objetDto.getId(), true);
+                    correspondence.setObjetFoundId(objetSaved.getId());
+                    correspondence.setObjetLostId(objetDto.getId());
                 } else {
-                    ResponseEntity<?> responseEntityFound = getPersonByObjetId(objetDto.getId(), true);
-                    ResponseEntity<?> responseEntityLost = getPersonByObjetId(objetSaved.getId(), true);
+                    responseEntityFound = getPersonByObjetId(objetDto.getId(), true);
+                    responseEntityLost = getPersonByObjetId(objetSaved.getId(), true);
+                    correspondence.setObjetFoundId(objetDto.getId());
+                    correspondence.setObjetLostId(objetSaved.getId());
+                }
 
-                    if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
-                            responseEntityLost.getStatusCode() == HttpStatus.OK) {
-                        PersonDto personFound = (PersonDto) responseEntityFound.getBody();
-                        PersonDto personLost = (PersonDto) responseEntityLost.getBody();
+                if (responseEntityFound.getStatusCode() == HttpStatus.OK &&
+                        responseEntityLost.getStatusCode() == HttpStatus.OK) {
+                    PersonDto personFound = (PersonDto) responseEntityFound.getBody();
+                    PersonDto personLost = (PersonDto) responseEntityLost.getBody();
 
-                        correspondence.setUserIdFound(personFound.getId());
-                        correspondence.setObjetFoundId(objetDto.getId());
-                        correspondence.setUserIdLost(personLost.getId());
-                        correspondence.setObjetLostId(objetSaved.getId());
-                    }
+                    correspondence.setUserIdFound(personFound.getId());
+                    correspondence.setUserIdLost(personLost.getId());
                 }
 
                 correspondence.setCorrespondenceStatus(Constant.CORRESPONDENCE_STATUS_SUCCESS);
@@ -168,6 +255,22 @@ public class ObjetServiceImpl implements ObjetService{
         }
 
         return correspondence;
+    }
+
+    private void createPaymentAndToken(Objet objet) {
+        Payment payment = new Payment();
+        Invoice invoice = new Invoice();
+        Store store = new Store();
+
+        invoice.setTotal_amount(Constant.PAYMENT_AMOUNT);
+        invoice.setDescription(Constant.INVOICE_DESCRIPTION);
+        store.setName(objet.getObjetName());
+        payment.setInvoice(invoice);
+        payment.setStore(store);
+
+        PaymentResponse paymentResponse = paymentService.addPayment(payment);
+        objet.setToken(paymentResponse.getToken());
+        updateObjet(objet.getId(), objetConverter.convertToDto(objet));
     }
 
     public void pushNotification(Long userId, Long objId){
