@@ -9,6 +9,8 @@ import sn.work.lostandfound.utils.Utils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -53,11 +55,32 @@ public class CategoryServiceImpl implements CategoryService{
         categoryRepository.deleteById(id);
     }
 
-    @Override
-    public List<CategoryDto> findAllCategories() {
-        List<Category> categoryList = categoryRepository.findAll();
-        return categoryList.stream().map(categoryConverter::convertToDto).collect(Collectors.toList());
-    }
+//    @Override
+//    public List<CategoryDto> findAllCategories() {
+//        List<Category> categoryList = categoryRepository.findAll();
+//        return categoryList.stream().map(categoryConverter::convertToDto).collect(Collectors.toList());
+//    }
+@Override
+public List<CategoryDto> findAllCategories() {
+    List<Category> categoryList = categoryRepository.findAll();
+
+    return categoryList.stream()
+            .map(category -> {
+                CategoryDto categoryDto = categoryConverter.convertToDto(category);
+                try {
+                    if (category.getCategoryImage() != null) {
+                        byte[] imageBytes = Files.readAllBytes(Paths.get(category.getCategoryImage()));
+                        categoryDto.setCategoryImageBytes(imageBytes);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    // Gérer l'erreur de lecture de l'image ici
+                }
+                return categoryDto;
+            })
+            .collect(Collectors.toList());
+}
+
 
     @Override
     public CategoryDto findCategoryById(Long id) {

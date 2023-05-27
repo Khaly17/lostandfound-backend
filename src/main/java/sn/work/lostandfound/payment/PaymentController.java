@@ -19,4 +19,8 @@ public class PaymentController {
     public ConfirmPayment verifyPayment(@PathVariable String token){
         return paymentService.verifyPayment(token);
     }
+    @GetMapping("/payment/token/{token}")
+    public void payment(@PathVariable String token){
+        paymentService.payment(token);
+    }
 }

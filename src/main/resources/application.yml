@@ -11,6 +11,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: true
+  resources:
+    static-locations: classpath:/static/, file:/app/images/category-images/, file:/app/images/object-images/
+
 
   # Configuration pour Gmail
   mail:

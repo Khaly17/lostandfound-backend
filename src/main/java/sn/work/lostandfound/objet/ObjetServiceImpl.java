@@ -5,6 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
 import sn.work.lostandfound.SemanticSimilarity.SemanticSimilarity;
 import sn.work.lostandfound.SemanticSimilarity.SemanticSimilarityScore;
 import sn.work.lostandfound.constant.Constant;
@@ -383,6 +384,5 @@ public class ObjetServiceImpl implements ObjetService{
             return false;
         }
     }
-
 
 }

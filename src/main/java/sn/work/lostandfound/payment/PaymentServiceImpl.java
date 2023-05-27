@@ -50,6 +50,25 @@ public class PaymentServiceImpl implements PaymentService{
             throw new IllegalStateException("La requête de vérification du paiement a échoué.");
         }
     }
+
+    @Override
+    public void payment(String token) {
+        HttpEntity request = new HttpEntity<>(getHeader());
+        ResponseEntity<String> response = restTemplate.exchange(
+                Constant.PAYMENT_URL + token,
+                HttpMethod.GET,
+                request,
+                String.class,
+                1
+        );
+        if (response.getStatusCode() == HttpStatus.OK) {
+            String paymentConfirm = response.getBody();
+            System.out.println(paymentConfirm);
+        } else {
+            throw new IllegalStateException("La requête de paiement a échoué.");
+        }
+
+    }
     public HttpHeaders getHeader(){
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -58,5 +77,7 @@ public class PaymentServiceImpl implements PaymentService{
         headers.set("PAYDUNYA-TOKEN", token);
         return headers;
     }
+
+
 
 }

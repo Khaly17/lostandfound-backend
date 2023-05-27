@@ -77,4 +77,6 @@ public class ObjetController {
     public void deleteObjet(@PathVariable("idObjet") Long idObjet){
         objetService.deleteObjet(idObjet);
     }
+
+
 }

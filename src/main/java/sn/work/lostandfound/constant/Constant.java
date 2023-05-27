@@ -2,6 +2,7 @@ package sn.work.lostandfound.constant;
 
 public class Constant {
     public static String SCORE_URL = "http://localhost:5000/match";
+    public static String PAYMENT_URL = "https://paydunya.com/sandbox-checkout/invoice/";
     public static String OBJET_FOUND_MOTIF = "OBJET_FOUND";
     public static String OBJET_LOST_MOTIF = "OBJET_LOST";
     public static String OBJET_FOUND_DESCRIPTION = "Vous avez déclaré avoir trouvé un objet qui correspond à un objet perdu: ";
