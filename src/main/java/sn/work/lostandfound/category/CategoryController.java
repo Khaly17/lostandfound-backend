@@ -1,5 +1,7 @@
 package sn.work.lostandfound.category;
 
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -42,27 +44,23 @@ public class CategoryController {
         categoryService.deleteCategory(categoryId);
     }
 
-        private static String BASE_IMAGE_PATH = "/app/images/";
-        @GetMapping("/{id}/image")
-        public ResponseEntity<byte[]> getCategoryImage(@PathVariable Long id) throws IOException {
-            CategoryDto category = categoryService.findCategoryById(id);
+    @GetMapping("/category/images/{imageName}")
+    public ResponseEntity<Resource> getImage(@PathVariable String imageName) {
+        String imagePath = "/app/images/category-images/" + imageName;
 
-            if (category != null && category.getCategoryImage() != null) {
-                // Lire le fichier d'image depuis le volume en utilisant le chemin d'image
-                File imageFile = new File(category.getCategoryImage());
+        try {
+            Resource imageResource = new FileSystemResource(imagePath);
 
-                // Convertir le fichier d'image en tableau de bytes
-                byte[] imageBytes = Files.readAllBytes(imageFile.toPath());
-
-                // Définir les en-têtes de la réponse
+            if (imageResource.exists()) {
                 HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.IMAGE_JPEG); // Remplacez par le type MIME approprié
-
-                return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
+                headers.setContentType(MediaType.IMAGE_PNG);
+                return new ResponseEntity<>(imageResource, headers, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-
-            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
+    }
 
 }
