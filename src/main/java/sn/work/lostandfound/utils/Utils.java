@@ -14,9 +14,10 @@ public class Utils {
     public static String fileUpload(MultipartFile file, String path) throws IOException {
         String extension = getFileExtension(file.getOriginalFilename());
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String filename = path + timestamp + "." + extension;
+        String imageName = timestamp + "." + extension;
+        String filename = path + imageName;
         saveFile(filename, file);
-        return filename;
+        return imageName;
     }
     public static void saveFile(String filename, MultipartFile file) throws IOException {
         File convertFile = new File(filename);

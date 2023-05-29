@@ -37,14 +37,15 @@ public class CategoryController {
     }
     @GetMapping("/category/all")
     public List<CategoryDto> findAllCategories(){
-        return categoryService.findAllCategories();
+        List<CategoryDto> categoryDtoList = categoryService.findAllCategories();
+        return categoryDtoList;
     }
     @DeleteMapping("/category/delete/{categoryId}")
     public void deleteCategory(@PathVariable("CategoryId") Long categoryId){
         categoryService.deleteCategory(categoryId);
     }
 
-    @GetMapping("/category/images/{imageName}")
+    @GetMapping("/category/image/{imageName}")
     public ResponseEntity<Resource> getImage(@PathVariable String imageName) {
         String imagePath = "/app/images/category-images/" + imageName;
 

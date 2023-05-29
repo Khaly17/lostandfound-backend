@@ -14,7 +14,7 @@ public class CategoryDto {
     private String libelle;
     private String code;
     private String categoryImage;
-    private byte[] categoryImageBytes;
+//    private byte[] categoryImageBytes;
     private List<ObjetDto> objetDtoList;
 }
 

@@ -31,7 +31,7 @@ public class CategoryServiceImpl implements CategoryService{
         Category category = categoryConverter.convertToEntity(categoryDto);
         String filename = Utils.fileUpload(file, Constant.CATEGORY_STORAGE_PATH);
         if(filename != null)
-            category.setCategoryImage(filename);
+            category.setCategoryImage("http://localhost:8080/find/category/image/"+filename);
         Category categorySaved = categoryRepository.save(category);
         return categoryConverter.convertToDto(categorySaved);
     }
@@ -70,7 +70,7 @@ public List<CategoryDto> findAllCategories() {
                 try {
                     if (category.getCategoryImage() != null) {
                         byte[] imageBytes = Files.readAllBytes(Paths.get(category.getCategoryImage()));
-                        categoryDto.setCategoryImageBytes(imageBytes);
+//                        categoryDto.setCategoryImageBytes(imageBytes);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
