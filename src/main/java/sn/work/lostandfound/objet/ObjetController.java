@@ -1,6 +1,5 @@
 package sn.work.lostandfound.objet;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +8,7 @@ import sn.work.lostandfound.person.Person;
 import sn.work.lostandfound.person.PersonConverter;
 import sn.work.lostandfound.person.PersonDto;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -27,10 +27,10 @@ public class ObjetController {
     }
     @PostMapping("/objet/create")
     public ResponseEntity<?> addObjet(
-            @RequestBody ObjetDto objetDto
-            //@RequestParam("file") MultipartFile file
-    ){
-        return objetService.addObjet(objetDto);
+            @RequestBody ObjetDto objetDto,
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        return objetService.addObjet(objetDto, file) ;
     }
     @GetMapping("/objet/all")
     public List<ObjetDto> findAllObjets() {

@@ -19,6 +19,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import sn.work.lostandfound.security.filter.JwtAuthFilter;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -48,12 +49,23 @@ public class SecurityConfig implements WebMvcConfigurer {
         return http.csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers(
-//                        "/find/person/all",
+                        "/find/person/all",
                         "/find/person/authenticate",
                         "/find/person/create",
                         "/find/category/create",
                         "/find/objet/create",
-                        "/find/objet/all"
+                        "/find/objet/all",
+
+                        "/configuration/security",
+                        "/swagger-ui/**",
+                        "/webjars/**",
+                        "/swagger-ui.html",
+                        "/configuration/ui",
+                        "/swagger-resources/**",
+                        "/swagger-resources",
+                        "/v3/api-docs/**",
+                        "/v3/api-docs",
+                        "/v2/api-docs/**"
                         ).permitAll()
                 .and()
                 .authorizeHttpRequests().requestMatchers("/find/**")

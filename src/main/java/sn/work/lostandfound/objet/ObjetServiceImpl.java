@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.multipart.MultipartFile;
 import sn.work.lostandfound.SemanticSimilarity.SemanticSimilarity;
 import sn.work.lostandfound.SemanticSimilarity.SemanticSimilarityScore;
 import sn.work.lostandfound.constant.Constant;
@@ -19,7 +20,9 @@ import sn.work.lostandfound.person.Person;
 import sn.work.lostandfound.person.PersonConverter;
 import sn.work.lostandfound.person.PersonDto;
 import sn.work.lostandfound.person.PersonRepository;
+import sn.work.lostandfound.utils.Utils;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -63,8 +66,8 @@ public class ObjetServiceImpl implements ObjetService{
         this.personConverter = personConverter;
     }
 
-@Override
-    public ResponseEntity<?> addObjet(ObjetDto objetDto) {
+    @Override
+    public ResponseEntity<?> addObjet(ObjetDto objetDto, MultipartFile file) throws IOException {
        if (objetDto.getObjetNumber() != null){
            if (objetRepository.existsByObjetNumberAndStatus(objetDto.getObjetNumber(),objetDto.getStatus())){
                return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -77,6 +80,9 @@ public class ObjetServiceImpl implements ObjetService{
         objet.setCreatedDate(formattedDate);
         objet.setUpdatedDate(formattedDate);
 
+        String filename = Utils.fileUpload(file, Constant.OBJECT_STORAGE_PATH);
+        if(filename != null)
+            objet.setPhoto("http://localhost:8080/find/objet/image/"+filename);
         Objet objetSaved = objetRepository.save(objet);
         processCorrespondence(objetSaved);
         ObjetDto savedObjetDto = objetConverter.convertToDto(objetSaved);

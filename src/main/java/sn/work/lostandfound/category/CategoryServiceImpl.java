@@ -55,31 +55,26 @@ public class CategoryServiceImpl implements CategoryService{
         categoryRepository.deleteById(id);
     }
 
-//    @Override
-//    public List<CategoryDto> findAllCategories() {
-//        List<Category> categoryList = categoryRepository.findAll();
-//        return categoryList.stream().map(categoryConverter::convertToDto).collect(Collectors.toList());
-//    }
-@Override
-public List<CategoryDto> findAllCategories() {
-    List<Category> categoryList = categoryRepository.findAll();
+    @Override
+    public List<CategoryDto> findAllCategories() {
+        List<Category> categoryList = categoryRepository.findAll();
 
-    return categoryList.stream()
-            .map(category -> {
-                CategoryDto categoryDto = categoryConverter.convertToDto(category);
-                try {
-                    if (category.getCategoryImage() != null) {
-                        byte[] imageBytes = Files.readAllBytes(Paths.get(category.getCategoryImage()));
-//                        categoryDto.setCategoryImageBytes(imageBytes);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    // Gérer l'erreur de lecture de l'image ici
-                }
-                return categoryDto;
-            })
-            .collect(Collectors.toList());
-}
+        return categoryList.stream()
+                .map(category -> {
+                    CategoryDto categoryDto = categoryConverter.convertToDto(category);
+    //                try {
+    //                    if (category.getCategoryImage() != null) {
+    //                        byte[] imageBytes = Files.readAllBytes(Paths.get(category.getCategoryImage()));
+    ////                        categoryDto.setCategoryImageBytes(imageBytes);
+    //                    }
+    //                } catch (IOException e) {
+    //                    e.printStackTrace();
+    //                    // Gérer l'erreur de lecture de l'image ici
+    //                }
+                    return categoryDto;
+                })
+                .collect(Collectors.toList());
+    }
 
 
     @Override
