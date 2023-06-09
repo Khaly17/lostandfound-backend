@@ -19,7 +19,9 @@ public class Constant {
     public static String ACTION_CALLBACK_URL = "http://senwork.com/callback_url";
     public static String ACTION_RETURN_URL = "http://senwork.com/return_url";
 
-    public static String CATEGORY_STORAGE_PATH = "/app/images/category-images/";
-    public static String OBJECT_STORAGE_PATH = "/app/images/object-images/";
+//    public static String CATEGORY_STORAGE_PATH = "/app/images/category-images/";
+//    public static String OBJECT_STORAGE_PATH = "/app/images/object-images/";
+    public static String CATEGORY_STORAGE_PATH = "src/main/resources/images/category-images/";
+    public static String OBJECT_STORAGE_PATH = "src/main/resources/images/object-images/";
 
 }

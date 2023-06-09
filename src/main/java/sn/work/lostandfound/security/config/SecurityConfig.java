@@ -49,10 +49,12 @@ public class SecurityConfig implements WebMvcConfigurer {
         return http.csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers(
+                        "/find/**",
                         "/find/person/all",
                         "/find/person/authenticate",
                         "/find/person/create",
                         "/find/category/create",
+                        "/find/category/all",
                         "/find/objet/create",
                         "/find/objet/all",
 
@@ -68,7 +70,7 @@ public class SecurityConfig implements WebMvcConfigurer {
                         "/v2/api-docs/**"
                         ).permitAll()
                 .and()
-                .authorizeHttpRequests().requestMatchers("/find/**")
+                .authorizeHttpRequests().requestMatchers("/finds/**")
                 .authenticated().and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

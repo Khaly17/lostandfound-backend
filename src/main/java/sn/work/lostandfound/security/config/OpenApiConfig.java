@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
                 title = "OpenApi specification - SENWORK",
                 version = "1.0",
                 license = @License(
-                        name = "Licence name",
+                        name = "License name",
                         url = "https://license-senwork.com"
                 ),
                 termsOfService = "Terms of service"
