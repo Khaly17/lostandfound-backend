@@ -1,7 +1,7 @@
 spring:
   datasource:
     password: khd.dev17
-    url: jdbc:postgresql://postgres-sql:5432/sentroov
+    url: jdbc:postgresql://localhost:5432/sentroov
     username: postgres
   jpa:
     hibernate:

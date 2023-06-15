@@ -148,11 +148,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.3.0</version>
-
-				<configuration>
-					<classifier>exec</classifier>
-				</configuration>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<id>package</id>
@@ -160,6 +156,10 @@
 						<goals>
 							<goal>jar</goal>
 						</goals>
+
+						<configuration>
+							<classifier>supplemental</classifier> <!-- Ajout du classifier -->
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
