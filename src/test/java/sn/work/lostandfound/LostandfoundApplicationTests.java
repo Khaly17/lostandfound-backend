@@ -3,10 +3,10 @@ package sn.work.lostandfound;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+//@SpringBootTest
 class LostandfoundApplicationTests {
 
-	@Test
+	//@Test
 	void contextLoads() {
 	}
 

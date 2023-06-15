@@ -1,7 +1,7 @@
 spring:
   datasource:
-    password: { PASSWORD_DB }
-    url: jdbc:postgresql://localhost:{PORT_DB}/sentroov
+    password: khd.dev17
+    url: jdbc:postgresql://postgres-sql:5432/sentroov
     username: postgres
   jpa:
     hibernate:
@@ -19,8 +19,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: { USERNAME_MAIL }
-    password: { PASSWORD_MAIL }
+    username: khd.andyou@gmail.com
+    password: Nguickf@ll17
     properties:
       mail:
         smtp:
@@ -32,13 +32,13 @@ spring:
 #  port: 8080
 
 payment:
-  MASTER_KEY: { MASTER_KEY_PAYMENT }
+  MASTER_KEY: 8XHqH8y3-lGwn-4WUi-diHV-FOSQmLzz5Cci
   dev:
-    PRIVATE_KEY: { PRIVATE_KEY_TEST_PAYMENT }
-    TOKEN: { TOKEN_TEST_PAYMENT }
+    PRIVATE_KEY: test_private_1zHjjVUMnHsHHvkW2G1V8ejcBVV
+    TOKEN: 1GwZSda7IgX3QK72FqNG
   prod:
-    PRIVATE_KEY: { PRIVATE_KEY_LIVE_PAYMENT }
-    TOKEN: { TOKEN_LIVE_PAYMENT }
+    PRIVATE_KEY: live_private_Y2Xcdyp5ISHTPjmKeyrXNyvsLqz
+    TOKEN: aItjzH3lLc1xdDuNdiur
   api:
     dev: https://app.paydunya.com/sandbox-api/v1/checkout-invoice/create
     prod: https://app.paydunya.com/api/v1/checkout-invoice/create
@@ -54,4 +54,5 @@ payment:
 image:
   category-storage-path: /images/category-images
   object-storage-path: /images/object-images
+
 

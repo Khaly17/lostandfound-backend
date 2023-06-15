@@ -50,8 +50,8 @@ public class CategoryController {
 
     @GetMapping("/category/image/{imageName}")
     public ResponseEntity<Resource> getImage(@PathVariable String imageName) {
-//        String imagePath = "/app/images/category-images/" + imageName;
-        String imagePath = "src/main/resources/images/category-images/" + imageName;
+        String imagePath = "/app/images/category-images/" + imageName;
+//        String imagePath = "src/main/resources/images/category-images/" + imageName;
 
         try {
             Resource imageResource = new FileSystemResource(imagePath);
